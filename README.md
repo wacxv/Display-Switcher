@@ -5,7 +5,7 @@ This application allows you to easily switch between display configurations, spe
 The purpose of this tool is to allow me to quickly switch my display settings from my laptop to my PC without the need to minimize any open windows or pressing any buttons on my monitor. By simply opening the system tray and clicking the switch button, I can seamlessly switch to my PC display, improving my workflow and productivity.
 
 ### Disclaimer
-This application is specifically designed for my personal device setup, allowing me to switch between my laptop display and my PC monitor. It may not work as intended on other devices or configurations, as it is tailored for my setup.
+This application is specifically designed for my personal device setup, allowing me to switch between my laptop display and my PC monitor. It may not work as intended on other devices, as it is made for my setup.
 
 ### Future Plans
 I plan to revise this tool soon, making it more customizable and user-friendly for anyone who wants to use it. If there is demand, I will include options to configure it for different display setups, allowing users to personalize it for their own devices.
