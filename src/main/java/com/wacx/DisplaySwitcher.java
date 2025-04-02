@@ -4,16 +4,18 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.*;
-import java.awt.SystemTray;
-import java.awt.TrayIcon;
-import java.awt.PopupMenu;
-import java.awt.MenuItem;
-import java.awt.AWTException;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.util.Objects;
+import java.util.prefs.Preferences;
 
 public class DisplaySwitcher {
+    private static JButton laptopButton;
+    private static JButton pcButton;
+    private static JFrame settingsFrame;
+    private static Preferences prefs = Preferences.userRoot().node("DisplaySwitcher");
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(DisplaySwitcher::createAndShowGUI);
     }
@@ -21,130 +23,91 @@ public class DisplaySwitcher {
     private static void createAndShowGUI() {
         JFrame frame = new JFrame("Display Switcher");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(350, 250); // Increased the size for better spacing
+        frame.setSize(300, 165);
+        frame.setLayout(new BorderLayout(10, 10));
+        frame.getContentPane().setBackground(new Color(30, 30, 30));
 
-        // Set the layout for the frame and align buttons horizontally
-        frame.setLayout(new BorderLayout(20, 20)); // Adding padding between components
+        // Create minimalistic toolbar
+        JToolBar toolBar = new JToolBar();
+        toolBar.setFloatable(false);
+        toolBar.setBackground(new Color(50, 50, 50));
+        toolBar.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        // Set the dark background color and light font color for minimalistic dark mode
-        frame.getContentPane().setBackground(new Color(45, 45, 48)); // Dark gray background
+        JButton settingsButton = new JButton("⚙");
+        settingsButton.setFocusable(false);
+        settingsButton.setBackground(new Color(50, 50, 50));
+        settingsButton.setForeground(Color.WHITE);
+        settingsButton.setBorderPainted(false);
+        settingsButton.setFont(new Font("Arial", Font.PLAIN, 16));
+        settingsButton.addActionListener(e -> openSettings());
 
-        // Create a label with a light gray font color
+        toolBar.add(settingsButton);
+        frame.add(toolBar, BorderLayout.NORTH);
+
         JLabel label = new JLabel("Switch Display");
-        label.setForeground(new Color(220, 220, 220)); // Light gray text
+        label.setForeground(new Color(220, 220, 220));
         label.setFont(new Font("Arial", Font.PLAIN, 16));
-        label.setHorizontalAlignment(SwingConstants.CENTER); // Center the label
+        label.setHorizontalAlignment(SwingConstants.CENTER);
 
-        // Apply the icon (ensure it's placed in resources)
         ImageIcon icon = new ImageIcon(DisplaySwitcher.class.getResource("/icon.jpg"));
         frame.setIconImage(icon.getImage());
 
-        // Create a vertical box layout for the label and an empty space
-        JPanel labelPanel = new JPanel();
-        labelPanel.setLayout(new BorderLayout()); // Use BorderLayout for better control
-        labelPanel.setBackground(new Color(45, 45, 48)); // Same dark background to match
-        labelPanel.add(Box.createVerticalStrut(30), BorderLayout.NORTH); // Space before the label
-        labelPanel.add(label, BorderLayout.CENTER); // Center the label
+        JPanel labelPanel = new JPanel(new BorderLayout());
+        labelPanel.setBackground(new Color(30, 30, 30));
+        labelPanel.add(Box.createVerticalStrut(20), BorderLayout.NORTH);
+        labelPanel.add(label, BorderLayout.CENTER);
 
-        // Panel to hold the buttons and arrange them horizontally
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 10)); // Horizontal layout with space between buttons
-        buttonPanel.setBackground(new Color(45, 45, 48)); // Same dark background for consistency
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 15));
+        buttonPanel.setBackground(new Color(30, 30, 30));
 
-        // Laptop Display button with styling
-        JButton laptopButton = new JButton("Laptop Display");
-        laptopButton.setBackground(new Color(60, 60, 60)); // Darker button background
-        laptopButton.setForeground(new Color(220, 220, 220)); // Light button text
-        laptopButton.setBorder(BorderFactory.createLineBorder(new Color(100, 100, 100))); // Subtle border
-        laptopButton.setFocusPainted(false);
-        laptopButton.setFont(new Font("Arial", Font.PLAIN, 14));
-        laptopButton.setPreferredSize(new Dimension(150, 40)); // Adjust the button size
-        laptopButton.setOpaque(true);
-        laptopButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        laptopButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                runBatchFile("laptop display.bat");
-            }
+        laptopButton = new JButton("Laptop");
+        styleButton(laptopButton);
+        laptopButton.addActionListener(e -> {
+            runBatchFile("laptop display.bat");
+            highlightButton(laptopButton, pcButton);
         });
 
-        // PC Display button with styling
-        JButton pcButton = new JButton("PC Display");
-        pcButton.setBackground(new Color(60, 60, 60)); // Darker button background
-        pcButton.setForeground(new Color(220, 220, 220)); // Light button text
-        pcButton.setBorder(BorderFactory.createLineBorder(new Color(100, 100, 100))); // Subtle border
-        pcButton.setFocusPainted(false);
-        pcButton.setFont(new Font("Arial", Font.PLAIN, 14));
-        pcButton.setPreferredSize(new Dimension(150, 40)); // Adjust the button size
-        pcButton.setOpaque(true);
-        pcButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        pcButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                runBatchFile("pc display.bat");
-            }
+        pcButton = new JButton("PC");
+        styleButton(pcButton);
+        pcButton.addActionListener(e -> {
+            runBatchFile("pc display.bat");
+            highlightButton(pcButton, laptopButton);
         });
 
-        // Add the label panel and button panel
-        frame.add(labelPanel, BorderLayout.NORTH); // Add label at the top with space
-        frame.add(buttonPanel, BorderLayout.CENTER); // Add buttons in the center
-
-        // Add buttons to the button panel
         buttonPanel.add(laptopButton);
         buttonPanel.add(pcButton);
 
-        // Create a tray icon and set up the context menu
-        if (SystemTray.isSupported()) {
-            SystemTray systemTray = SystemTray.getSystemTray();
-            TrayIcon trayIcon = new TrayIcon(createImageIcon("/icon.jpg").getImage(), "Display Switcher");
-
-            // Set up the popup menu for the tray icon
-            PopupMenu popupMenu = new PopupMenu();
-            MenuItem laptopDisplayItem = new MenuItem("Laptop Display");
-            MenuItem pcDisplayItem = new MenuItem("PC Display");
-            MenuItem exitItem = new MenuItem("Exit");
-
-            // Add listeners for each menu item
-            laptopDisplayItem.addActionListener(e -> runBatchFile("laptop display.bat"));
-            pcDisplayItem.addActionListener(e -> runBatchFile("pc display.bat"));
-            exitItem.addActionListener(e -> System.exit(0));
-
-            // Add the items to the popup menu
-            popupMenu.add(laptopDisplayItem);
-            popupMenu.add(pcDisplayItem);
-            popupMenu.addSeparator();
-            popupMenu.add(exitItem);
-
-            // Set the popup menu for the tray icon
-            trayIcon.setPopupMenu(popupMenu);
-
-            // Add the tray icon to the system tray
-            try {
-                systemTray.add(trayIcon);
-            } catch (AWTException ex) {
-                ex.printStackTrace();
-            }
-        } else {
-            JOptionPane.showMessageDialog(frame, "System Tray is not supported on this platform.");
-        }
-
-        // Center the window on the screen
+        frame.add(labelPanel, BorderLayout.NORTH);
+        frame.add(buttonPanel, BorderLayout.CENTER);
         frame.setLocationRelativeTo(null);
-        frame.setVisible(true); // Show window AFTER all components are added
-    }
+        frame.setVisible(true);
 
-    // Utility method to create an ImageIcon from the resource path
-    private static ImageIcon createImageIcon(String path) {
-        java.net.URL imgURL = DisplaySwitcher.class.getResource(path);
-        if (imgURL != null) {
-            return new ImageIcon(imgURL);
-        } else {
-            System.err.println("Couldn't find file: " + path);
-            return null;
+        createSystemTray();
+
+        // Auto-start if enabled
+        if (prefs.getBoolean("runAtStartup", false)) {
+            frame.setVisible(false);
         }
     }
 
-    // Method to run the batch file
+    private static void styleButton(JButton button) {
+        button.setBackground(new Color(60, 60, 60));
+        button.setForeground(new Color(220, 220, 220));
+        button.setBorder(BorderFactory.createEmptyBorder());
+        button.setFocusPainted(false);
+        button.setFont(new Font("Arial", Font.PLAIN, 14));
+        button.setPreferredSize(new Dimension(100, 35));
+        button.setOpaque(true);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    }
+
+    private static void highlightButton(JButton highlight, JButton other) {
+        highlight.setBackground(new Color(80, 80, 80));
+        highlight.setForeground(new Color(255, 255, 255));
+        other.setBackground(new Color(60, 60, 60));
+        other.setForeground(new Color(220, 220, 220));
+    }
+
     private static void runBatchFile(String fileName) {
         try {
             String batchFilePath = System.getProperty("user.dir") + "\\" + fileName;
@@ -161,6 +124,114 @@ public class DisplaySwitcher {
         } catch (IOException | InterruptedException ex) {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(null, "Error executing " + fileName, "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private static void createSystemTray() {
+        if (!SystemTray.isSupported()) {
+            System.out.println("System tray is not supported");
+            return;
+        }
+
+        SystemTray tray = SystemTray.getSystemTray();
+        TrayIcon trayIcon = new TrayIcon(new ImageIcon(DisplaySwitcher.class.getResource("/icon.jpg")).getImage(), "Display Switcher");
+        trayIcon.setImageAutoSize(true);
+
+        PopupMenu popupMenu = new PopupMenu();
+
+        MenuItem laptopItem = new MenuItem("Laptop Display");
+        laptopItem.addActionListener(e -> runBatchFile("laptop display.bat"));
+        popupMenu.add(laptopItem);
+
+        MenuItem pcItem = new MenuItem("PC Display");
+        pcItem.addActionListener(e -> runBatchFile("pc display.bat"));
+        popupMenu.add(pcItem);
+
+        MenuItem settingsItem = new MenuItem("Settings");
+        settingsItem.addActionListener(e -> openSettings());
+        popupMenu.add(settingsItem);
+
+        MenuItem exitItem = new MenuItem("Exit");
+        exitItem.addActionListener(e -> System.exit(0));
+        popupMenu.add(exitItem);
+
+        trayIcon.setPopupMenu(popupMenu);
+
+        try {
+            tray.add(trayIcon);
+        } catch (AWTException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void openSettings() {
+        if (settingsFrame != null) {
+            settingsFrame.toFront();
+            return;
+        }
+
+        settingsFrame = new JFrame("Settings");
+        settingsFrame.setSize(250, 120);
+        settingsFrame.setLayout(new FlowLayout());
+        settingsFrame.getContentPane().setBackground(new Color(30, 30, 30));
+
+        ImageIcon icon = new ImageIcon(Objects.requireNonNull(DisplaySwitcher.class.getResource("/icon.jpg")));
+        settingsFrame.setIconImage(icon.getImage());
+
+        JCheckBox startupCheckBox = new JCheckBox("Run at Startup");
+        startupCheckBox.setForeground(new Color(220, 220, 220));
+        startupCheckBox.setBackground(new Color(30, 30, 30));
+        startupCheckBox.setSelected(prefs.getBoolean("runAtStartup", false));
+        startupCheckBox.setFocusPainted(false);
+
+        JButton saveButton = new JButton("Save");
+        styleButton(saveButton);
+        saveButton.addActionListener(e -> {
+            boolean runAtStartup = startupCheckBox.isSelected();
+            prefs.putBoolean("runAtStartup", runAtStartup);
+
+            if (runAtStartup) {
+                addAppToStartup();  // Add to startup registry
+            } else {
+                removeAppFromStartup();  // Remove from startup registry
+            }
+
+            JOptionPane.showMessageDialog(settingsFrame, "Settings saved!");
+        });
+
+        settingsFrame.add(startupCheckBox);
+        settingsFrame.add(saveButton);
+        settingsFrame.setLocationRelativeTo(null);
+        settingsFrame.setVisible(true);
+
+        settingsFrame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                settingsFrame = null;
+            }
+        });
+    }
+
+    private static void addAppToStartup() {
+        String appPath = System.getProperty("user.dir") + "\\DisplaySwitcher.exe";  // Replace with your actual executable path
+        String key = "Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+        try {
+            Preferences userPrefs = Preferences.userRoot().node(key);
+            userPrefs.put("DisplaySwitcher", appPath);  // This will add the executable path to the registry
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error adding to startup.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private static void removeAppFromStartup() {
+        String key = "Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+        try {
+            Preferences userPrefs = Preferences.userRoot().node(key);
+            userPrefs.remove("DisplaySwitcher");  // This will remove the registry entry for your app
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error removing from startup.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 }
