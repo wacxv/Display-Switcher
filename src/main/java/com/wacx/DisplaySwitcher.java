@@ -2,11 +2,8 @@ package com.wacx;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.io.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.Objects;
 import java.util.prefs.Preferences;
 
@@ -22,7 +19,7 @@ public class DisplaySwitcher {
 
     private static void createAndShowGUI() {
         JFrame frame = new JFrame("Display Switcher");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);  // Avoid default exit behavior
         frame.setSize(300, 165);
         frame.setLayout(new BorderLayout(10, 10));
         frame.getContentPane().setBackground(new Color(30, 30, 30));
@@ -86,8 +83,16 @@ public class DisplaySwitcher {
 
         // Auto-start if enabled
         if (prefs.getBoolean("runAtStartup", false)) {
-            frame.setVisible(false);
+            frame.setVisible(false);  // Hide main window if auto-start is enabled
         }
+
+        // Add window listener for hiding window instead of closing on close button
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                frame.setVisible(false); // Hide frame, minimize to tray
+            }
+        });
     }
 
     private static void styleButton(JButton button) {
@@ -157,10 +162,29 @@ public class DisplaySwitcher {
 
         trayIcon.setPopupMenu(popupMenu);
 
+        // Add double-click listener to open the application window
+        trayIcon.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2) {
+                    openApp();
+                }
+            }
+        });
+
         try {
             tray.add(trayIcon);
         } catch (AWTException e) {
             e.printStackTrace();
+        }
+    }
+
+    private static void openApp() {
+        // Bring the application window to the front
+        if (settingsFrame != null) {
+            settingsFrame.toFront();
+        } else {
+            createAndShowGUI();  // If settings frame is null, recreate the GUI
         }
     }
 
@@ -228,7 +252,7 @@ public class DisplaySwitcher {
         String key = "Software\\Microsoft\\Windows\\CurrentVersion\\Run";
         try {
             Preferences userPrefs = Preferences.userRoot().node(key);
-            userPrefs.remove("DisplaySwitcher");  // This will remove the registry entry for your app
+            userPrefs.remove("DisplaySwitcher");
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(null, "Error removing from startup.", "Error", JOptionPane.ERROR_MESSAGE);
