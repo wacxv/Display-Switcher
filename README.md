@@ -11,5 +11,5 @@ This application is specifically designed for my personal device setup, allowing
 I plan to revise this tool soon, making it more customizable and user-friendly for anyone who wants to use it. If there is demand, I will include options to configure it for different display setups, allowing users to personalize it for their own devices.
 
 ## Credits
-This tool utilizes [ControlMyMonitor](https://www.nirsoft.net/utils/control_my_monitor.html) by NirSoft to enable the display switching functionality.
+This tool utilizes [ControlMyMonitor](https://www.nirsoft.net/utils/control_my_monitor.html) to enable the display switching functionality.
 
