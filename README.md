@@ -8,7 +8,7 @@ The purpose of this tool is to allow me to quickly switch my display settings fr
 This application is specifically designed for my personal device setup, allowing me to switch between my laptop display and my PC monitor. It may not work as intended on other devices, as it is made for my setup.
 
 ### Future Plans
-I plan to revise this tool soon, making it more customizable and user-friendly for anyone who wants to use it. If there is demand, I will include options to configure it for different display setups, allowing users to personalize it for their own devices.
+If there's significant demand, I plan to revise this tool to make it more customizable and user-friendly. The update will include options for configuring it to fit different display setups, allowing users to personalize it for their devices.
 
 ## Credits
 This tool utilizes [ControlMyMonitor](https://www.nirsoft.net/utils/control_my_monitor.html) to enable the display switching functionality.
