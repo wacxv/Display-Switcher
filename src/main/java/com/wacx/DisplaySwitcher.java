@@ -4,7 +4,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.*;
+import java.awt.SystemTray;
+import java.awt.TrayIcon;
+import java.awt.PopupMenu;
+import java.awt.MenuItem;
+import java.awt.AWTException;
 
 public class DisplaySwitcher {
     public static void main(String[] args) {
@@ -86,11 +93,58 @@ public class DisplaySwitcher {
         buttonPanel.add(laptopButton);
         buttonPanel.add(pcButton);
 
+        // Create a tray icon and set up the context menu
+        if (SystemTray.isSupported()) {
+            SystemTray systemTray = SystemTray.getSystemTray();
+            TrayIcon trayIcon = new TrayIcon(createImageIcon("/icon.jpg").getImage(), "Display Switcher");
+
+            // Set up the popup menu for the tray icon
+            PopupMenu popupMenu = new PopupMenu();
+            MenuItem laptopDisplayItem = new MenuItem("Laptop Display");
+            MenuItem pcDisplayItem = new MenuItem("PC Display");
+            MenuItem exitItem = new MenuItem("Exit");
+
+            // Add listeners for each menu item
+            laptopDisplayItem.addActionListener(e -> runBatchFile("laptop display.bat"));
+            pcDisplayItem.addActionListener(e -> runBatchFile("pc display.bat"));
+            exitItem.addActionListener(e -> System.exit(0));
+
+            // Add the items to the popup menu
+            popupMenu.add(laptopDisplayItem);
+            popupMenu.add(pcDisplayItem);
+            popupMenu.addSeparator();
+            popupMenu.add(exitItem);
+
+            // Set the popup menu for the tray icon
+            trayIcon.setPopupMenu(popupMenu);
+
+            // Add the tray icon to the system tray
+            try {
+                systemTray.add(trayIcon);
+            } catch (AWTException ex) {
+                ex.printStackTrace();
+            }
+        } else {
+            JOptionPane.showMessageDialog(frame, "System Tray is not supported on this platform.");
+        }
+
         // Center the window on the screen
         frame.setLocationRelativeTo(null);
         frame.setVisible(true); // Show window AFTER all components are added
     }
 
+    // Utility method to create an ImageIcon from the resource path
+    private static ImageIcon createImageIcon(String path) {
+        java.net.URL imgURL = DisplaySwitcher.class.getResource(path);
+        if (imgURL != null) {
+            return new ImageIcon(imgURL);
+        } else {
+            System.err.println("Couldn't find file: " + path);
+            return null;
+        }
+    }
+
+    // Method to run the batch file
     private static void runBatchFile(String fileName) {
         try {
             String batchFilePath = System.getProperty("user.dir") + "\\" + fileName;
